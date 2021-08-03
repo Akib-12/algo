@@ -1,39 +1,88 @@
-class Trie {
-public:
+const int SZ = 2;
+template<typename T, typename K>
+struct Trie {
   struct node {
-    bool is_teminal = false;
-    vector<int> table;
-    int set_occurence;
-    bool visited; // use this for tree traversal
-    int depth;
-    node(int _n) { table = vector<int>(_n); set_occurence = 0; visited = false; depth = 0; }
+    K value;
+    bool is_terminal;
+    int vis_count;
+    vector<int> children;
+
+    node(K val) : value(val) {
+      is_terminal = false;
+      children = vector<int>(SZ);
+      vis_count = 0;
+    }
   };
 
-  int table_size;
-  vector<node> nxt;
-  int node_id;
-  Trie(int _size) : table_size(_size) {
-    nxt.emplace_back(table_size);
-    node_id = 0;
+  int cast(K val) {
+    int ret = val;  // change your casting function here
+    assert(ret < SZ and ret >= 0);
+    return ret;
   }
 
-  void insert(const string &s) {
-    int now = 0;
-    for (char ch : s) {
-      int prev = now;
-      if (nxt[now].table[ch - 'A'] == 0) {
-        nxt.push_back(node(26));
-        nxt[now].table[ch - 'A'] = ++node_id;
+  vector<node> tree;
+
+  Trie(K val) { tree.push_back(node(val)); }
+
+  void insert(const T &sequence, bool remove = false) {
+    int cur = 0;
+    for (int i = 0; i < (int) sequence.size(); i++) {
+      K value = sequence[i];
+      if (tree[cur].children[cast(value)] == 0) {
+        tree[cur].children[cast(value)] = (int) tree.size();
+        tree.emplace_back(value);
       }
-      now = nxt[now].table[ch - 'A'];
-      nxt[now].set_occurence++;
-      nxt[now].depth = nxt[prev].depth + 1;
-      ans = max(ans, nxt[now].depth * 1ll * nxt[now].set_occurence);
+      cur = tree[cur].children[cast(value)];
+      if (remove) {
+        tree[cur].vis_count -= 1;
+      } else {
+        tree[cur].vis_count += 1;
+      }
     }
-    nxt[now].is_teminal = true;
+    tree[cur].is_terminal = true;
   }
 
-  void debug_node() {
-    // for (auto nd : nxt) { dbg(nd.is_teminal); dbg(nd.table); dbg(nd.set_occurence); dbg(nd.visited); dbg('\n', '\n'); }
+  void remove(const T& sequence) { insert(sequence, true); }
+
+  int get_node(const T& sequence) {
+    int cur = 0;
+    for (int i = 0; i < (int) sequence.size(); i++) {
+      K value = sequence[i];
+      if (tree[cur].children[cast(value)] == 0) return 0;
+      cur = tree[cur].children[cast(value)];
+    }
+    return cur;
   }
-};
+
+  bool search(const T& sequence) {
+    int n = get_node(sequence);
+    return n != 0 and tree[n].is_terminal;
+  }
+
+  bool starts_with(const T& sequence) { return get_node(sequence) != 0; }
+
+  void make_all_unvisited() { for (auto& node : tree) node.visited = false; }
+
+  void dfs(int cur) {
+    tree[cur].visited = true;
+    for (int i = 0; i < SZ; i++) {
+      if (tree[cur].children[i] == 0) continue;
+      int child_node = tree[cur].children[i];
+      if (tree[child_node].visited) continue;
+      dfs(child_node);
+    }
+  }
+
+  void debug() {
+    int nc = 0;
+    for (auto& nd : tree) {
+      dbg(nc++);
+      dbg(nd.visited);
+      dbg(nd.children);
+      dbg(nd.vis_count);
+      dbg(nd.value);
+      dbg(nd.is_terminal);
+      cout << '\n';
+    }
+  }
+}; 
