@@ -8,15 +8,15 @@ vector<int> find_topsort(const digraph<T> &g) {
     deg[g.edges[id].to]++;
   }
   vector<int> x;
-  priority_queue<int, vector<int>, greater<>> pq;
+  set<int> st;
   for (int i = 0; i < g.n; i++) {
     if (deg[i] == 0) {
-      pq.push(i);
+      st.insert(i);
     }
   }
-  while (!pq.empty()) {
-    int i = pq.top();
-    pq.pop();
+  while (!st.empty()) {
+    int i = *st.begin();
+    st.erase(st.begin());
     x.push_back(i);
     for (int id : g.g[i]) {
       if (g.ignore != nullptr && g.ignore(id)) {
@@ -25,7 +25,7 @@ vector<int> find_topsort(const digraph<T> &g) {
       auto &e = g.edges[id];
       int to = e.to;
       if (--deg[to] == 0) {
-        pq.push(to);
+        st.insert(to);
       }
     }
   }
